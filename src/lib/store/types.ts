@@ -1,4 +1,4 @@
-import type { LetterContent } from "@/lib/templates";
+﻿import type { LetterContent } from "@/lib/templates";
 import type { Plan } from "@/lib/plan";
 
 export const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,59}$/;
@@ -32,6 +32,7 @@ export interface Driver {
   get(slug: string): Promise<StoredRecord | null>;
   addEvent(slug: string, type: "open" | "yes", noAttempts: number): Promise<boolean>;
   verifyToken(slug: string, token: string): Promise<boolean>;
+  upgradeToPaid(slug: string, fullLetter?: LetterContent, paymentId?: string): Promise<boolean>;
 }
 
 export const emptyEvents = (): LetterEvents => ({ openCount: 0, noAttempts: 0 });

@@ -1,4 +1,4 @@
-import { randomBytes } from "crypto";
+﻿import { randomBytes } from "crypto";
 import { slugify } from "@/lib/utils";
 import { applyPlanLimits, FREE_PLAN, Plan } from "@/lib/plan";
 import type { LetterContent } from "@/lib/templates";
@@ -86,4 +86,14 @@ export async function getStatus(slug: string, token: string) {
     expiresAt: rec.expiresAt,
     expired: isExpired(rec),
   };
+}
+
+/** Atualiza a carta para plano pago (libera link permanente e dados completos). */
+export async function upgradeLetter(
+  slug: string,
+  fullLetter?: LetterContent,
+  paymentId?: string
+): Promise<boolean> {
+  const clean = fullLetter ? sanitizeLetter(fullLetter) : undefined;
+  return getDriver().upgradeToPaid(slug, clean ?? undefined, paymentId);
 }

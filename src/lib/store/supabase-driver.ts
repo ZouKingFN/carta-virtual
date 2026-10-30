@@ -1,4 +1,4 @@
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+﻿import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { createHash, randomUUID, timingSafeEqual } from "crypto";
 import { sanitizeLetter } from "@/lib/store/sanitize";
 import { Driver, LetterEvents, NewRecord, SLUG_RE, StoredRecord, emptyEvents } from "@/lib/store/types";
@@ -107,6 +107,26 @@ export function supabaseDriver(url: string, serviceKey: string): Driver {
       const a = Buffer.from(data.manage_token_hash);
       const b = Buffer.from(sha256(token));
       return a.length === b.length && timingSafeEqual(a, b);
+    },
+
+    async upgradeToPaid(slug, fullLetter, paymentId) {
+      if (!SLUG_RE.test(slug)) return false;
+      const updates: Record<string, unknown> = {
+        plan: "paid",
+        expires_at: null,
+        paid_at: new Date().toISOString(),
+      };
+      if (paymentId) updates.payment_id = paymentId;
+      if (fullLetter) {
+        let cleanLetter = fullLetter;
+        if (cleanLetter.photoUrl?.startsWith("data:image/")) {
+          cleanLetter = { ...cleanLetter, photoUrl: await uploadPhoto(cleanLetter.photoUrl) };
+        }
+        updates.content = cleanLetter;
+      }
+      const { error } = await db.from("letters").update(updates).eq("slug", slug);
+      if (error) throw new Error(`Falha ao atualizar plano da carta: ${error.message}`);
+      return true;
     },
   };
 }

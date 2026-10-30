@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useRef, useState } from "react";
 import Link from "next/link";
@@ -51,7 +51,7 @@ export default function BuilderPage() {
     setIsCheckoutModalOpen(true);
   };
   const closeCheckout = () => {
-    closeCheckout();
+    setIsCheckoutModalOpen(false);
     setLockReason(null);
   };
 

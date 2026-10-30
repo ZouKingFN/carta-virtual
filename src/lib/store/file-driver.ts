@@ -1,4 +1,4 @@
-import { promises as fs } from "fs";
+﻿import { promises as fs } from "fs";
 import path from "path";
 import { timingSafeEqual } from "crypto";
 import { sanitizeLetter } from "@/lib/store/sanitize";
@@ -84,6 +84,18 @@ export function fileDriver(): Driver {
       const a = Buffer.from(rec.manageToken);
       const b = Buffer.from(token);
       return a.length === b.length && timingSafeEqual(a, b);
+    },
+
+    async upgradeToPaid(slug, fullLetter, paymentId) {
+      const rec = await read(slug);
+      if (!rec) return false;
+      rec.plan = "paid";
+      rec.expiresAt = undefined;
+      if (fullLetter) {
+        rec.letter = fullLetter;
+      }
+      await write(slug, rec);
+      return true;
     },
   };
 }
