@@ -6,6 +6,7 @@ import { sanitizeLetter } from "@/lib/store/sanitize";
 import { Driver, LetterEvents, StoredRecord } from "@/lib/store/types";
 import { fileDriver } from "@/lib/store/file-driver";
 import { supabaseDriver } from "@/lib/store/supabase-driver";
+import { firebaseDriver } from "@/lib/store/firebase-driver";
 
 export { sanitizeLetter };
 export type { LetterEvents };
@@ -20,15 +21,28 @@ let driver: Driver | undefined;
 
 function getDriver(): Driver {
   if (driver) return driver;
+
+  // 1. Prioridade: Firebase (se as variáveis do Firebase estiverem configuradas)
+  if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+    driver = firebaseDriver();
+    return driver;
+  }
+
+  // 2. Supabase (fallback)
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (url && key) {
     driver = supabaseDriver(url, key);
-  } else if (process.env.NODE_ENV === "production") {
-    throw new Error("Configure SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY nas variáveis de ambiente.");
-  } else {
-    driver = fileDriver();
+    return driver;
   }
+
+  // 3. Em produção, se nenhum banco em nuvem estiver configurado, avisa com erro explícito
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Configure as variáveis do Firebase ou Supabase no ambiente de produção.");
+  }
+
+  // 4. Desenvolvimento local: guarda em arquivos (./.data/letters)
+  driver = fileDriver();
   return driver;
 }
 
